@@ -12,33 +12,34 @@ LedControl lc = LedControl(DIN, CLK, CS, 1);
 
 void setup() {
   Serial.begin(9600);
-  pinMode(button1Pin, INPUT);
-  pinMode(button2Pin, INPUT);
 
+  // https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/
+  pinMode(button1Pin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(button1Pin), onYellowBtnPress, FALLING);
+  pinMode(button2Pin, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(button2Pin), onRedBtnPress, FALLING);
+  
   lc.shutdown(0, false); // wake up led display
   lc.setIntensity(0, 1); // set intensity to 1 (0-15)
   lc.clearDisplay(0);    // clear display
 }
 
 void loop() {
-  /*for (int row=0; row < 8; ++row) {
+  for (int row=0; row < 8; ++row) {
     for (int col=0; col < 8; ++col) {
-      lc.setLed(0, row, col, true);
-
-      if(digitalRead(button2Pin)== HIGH) {
-        Serial.println("button2Pin pressed");
-      } else if (digitalRead(button1Pin) == HIGH) {
-        Serial.println("button1Pin pressed");
-      }
-      
+      lc.setLed(0, row, col, true);      
       delay(50);
     }
-  }*/
-
-
-  if(digitalRead(button2Pin)== HIGH) {
-    Serial.println("button2Pin pressed");
-  } else if (digitalRead(button1Pin) == HIGH) {
-    Serial.println("button1Pin pressed");
   }
+
+}
+
+// interrupt function to trigger on the yellow button press
+void onYellowBtnPress() {
+  Serial.println("button1Pin pressed");
+}
+
+// interrupt function to trigger on the red button press
+void onRedBtnPress() {
+  Serial.println("button2Pin pressed");
 }
