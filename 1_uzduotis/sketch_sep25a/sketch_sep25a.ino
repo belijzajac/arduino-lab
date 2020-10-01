@@ -1,0 +1,44 @@
+#include <LedControl.h> // for LED Dot Matrix
+
+const int button1Pin = 2; // yellow button
+const int button2Pin = 3; // red button
+
+// LED Dot Matrix pins
+const int DIN = 12;
+const int CS  = 10;
+const int CLK = 11;
+
+LedControl lc = LedControl(DIN, CLK, CS, 1);
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(button1Pin, INPUT);
+  pinMode(button2Pin, INPUT);
+
+  lc.shutdown(0, false); // wake up led display
+  lc.setIntensity(0, 1); // set intensity to 1 (0-15)
+  lc.clearDisplay(0);    // clear display
+}
+
+void loop() {
+  /*for (int row=0; row < 8; ++row) {
+    for (int col=0; col < 8; ++col) {
+      lc.setLed(0, row, col, true);
+
+      if(digitalRead(button2Pin)== HIGH) {
+        Serial.println("button2Pin pressed");
+      } else if (digitalRead(button1Pin) == HIGH) {
+        Serial.println("button1Pin pressed");
+      }
+      
+      delay(50);
+    }
+  }*/
+
+
+  if(digitalRead(button2Pin)== HIGH) {
+    Serial.println("button2Pin pressed");
+  } else if (digitalRead(button1Pin) == HIGH) {
+    Serial.println("button1Pin pressed");
+  }
+}
