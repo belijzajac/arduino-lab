@@ -22,57 +22,139 @@ void setup() {
   lc.shutdown(0, false);    // wake up led display
   lc.setIntensity(0, 1);    // set intensity to 1 (0-15)
   lc.clearDisplay(0);       // clear display
-  lc.setLed(0, 3, 0, true); // light up a pixel at (3, 0)
+  lc.setLed(0, 7, 3, true); // light up a pixel at (7, 3)
 }
 
 struct Player {
-  int prevRow = 0;
-  int currRow = 3;
+  int prevCol = 0;
+  int currCol = 3;
 
   // update player's position
-  void update() {
-    if (currRow != prevRow) {
-      lc.setLed(0, prevRow, 0, false);
-      lc.setLed(0, currRow, 0, true);
+  void draw() {
+    if (currCol != prevCol) {
+      lc.setLed(0, 7, prevCol, false);
+      lc.setLed(0, 7, currCol, true);
     }
   }
 
-  // move player "dot" down
+  // move player "dot" to the right
   void increase() {
-    if (currRow + 1 < 8) {
-      prevRow = currRow;
-      ++currRow;
-      update();
+    if (currCol + 1 < 8) {
+      prevCol = currCol;
+      ++currCol;
+      draw();
     }
   }
 
-  // move player "dot" up
+  // move player "dot" to the left
   void decrease() {
-    if (currRow - 1 >= 0) {
-      prevRow = currRow;
-      --currRow;
-      update();
+    if (currCol - 1 >= 0) {
+      prevCol = currCol;
+      --currCol;
+      draw();
     }
   }
 };
 
+struct FallingObjects {
+  int clmns[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  int turnNo = 1;
+  bool isGameOver = false;
+
+  void draw() {
+    for(int i = 0; i < 8; ++i){
+      if(clmns[i] > 0) {
+        // draws a 3-dots-long tail
+        lc.setLed(0, clmns[i] - 1, i, true);
+        lc.setLed(0, clmns[i] - 2, i, true);
+        lc.setLed(0, clmns[i] - 3, i, true);
+      }
+    }
+  }
+  
+  void update(Player *pl) {
+    // spawn a new falling object every 4 turns
+    if(turnNo == 4){
+      int randomNum = random(0, 8);
+      if(clmns[randomNum] == 0){  
+        clmns[randomNum] = 1;
+      }
+
+      turnNo = 1;
+    }
+
+    for(int i = 0; i < 8; ++i){
+      // remove objects that went out of display
+      if(clmns[i] == 11) { // 8 + 3 dots per tail
+        clmns[i] = 0;
+      }
+      
+      // object falls 1 row below
+      if(clmns[i] != 0) {
+        ++clmns[i];
+      }
+    }
+
+    ++turnNo;
+    lc.clearDisplay(0);
+    pl->draw();
+  }
+  
+  void checkCollision(Player *pl) {
+    if(clmns[pl->currCol] == 8 || clmns[pl->currCol] == 9 || clmns[pl->currCol] == 10){      
+      // remove object
+      for(int i = 0; i < 8; ++i){
+        clmns[i] = 0;
+      }
+      
+      gameOver();
+    }
+  }
+  
+  void gameOver() {
+    turnNo = 1;
+    isGameOver = true;
+    
+    // draws end-game "animation"
+    for (int row = 0; row < 8; ++row) {
+      for (int col = 0; col < 8; ++col) {
+        lc.setLed(0, row, col, true);
+      }
+    }
+    
+    delay(500);
+    lc.clearDisplay(0);
+    isGameOver = false;
+  }
+};
+
 struct Player playerDot{};
+struct FallingObjects fallingObjects{};
+
+unsigned long DELAY_TIME = 100;       // 0.1 sec
+unsigned long delayStart = millis();  // the time the delay started
 
 void loop() {
-  /*for (int row=0; row < 8; ++row) {
-    for (int col=0; col < 8; ++col) {
-      lc.setLed(0, row, col, true);      
-      delay(50);
-    }
-  }*/
+  // repeating timer
+  if (millis() - delayStart >= DELAY_TIME) {
+    fallingObjects.update(&playerDot);
+    fallingObjects.draw();
+    fallingObjects.checkCollision(&playerDot);
+
+    delayStart += DELAY_TIME;
+  }
 }
 
 // interrupt function to trigger on the yellow button press
 void onYellowBtnPress() {
-  playerDot.decrease();
+  if (!fallingObjects.isGameOver) {
+    playerDot.decrease();
+  }
 }
 
 // interrupt function to trigger on the red button press
 void onRedBtnPress() {
-  playerDot.increase();
+  if (!fallingObjects.isGameOver) {
+    playerDot.increase();
+  }
 }
