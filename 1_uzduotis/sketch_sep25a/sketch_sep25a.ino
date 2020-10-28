@@ -83,6 +83,7 @@ struct FallingObjects {
       turnNo = 1;
     }
 
+    // animate falling objects
     for(int i = 0; i < 8; ++i){
       // remove objects that went out of display
       if(clmns[i] == 11) { // 8 + 3 dots per tail
