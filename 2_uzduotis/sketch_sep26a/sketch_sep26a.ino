@@ -1,14 +1,24 @@
-#include <LedControl.h> // for LED Dot Matrix
+#include <LedControl.h>    // for LED Dot Matrix
+#include <LiquidCrystal.h> // for LCD display
 
 const int button1Pin = 2; // yellow button
 const int button2Pin = 3; // red button
 
-// LED Dot Matrix pins
+// pins for LED Dot Matrix
 const int DIN = 12;
 const int CS  = 10;
 const int CLK = 11;
 
-LedControl lc = LedControl(DIN, CLK, CS, 1);
+// pins for LCD display
+const int RS = 9;
+const int EN = 8;
+const int D4 = 7;
+const int D5 = 6;
+const int D6 = 5;
+const int D7 = 4;
+
+auto lc  = LedControl(DIN, CLK, CS, 1);
+auto lcd = LiquidCrystal(RS, EN, D4, D5, D6, D7);
 
 void setup() {
   Serial.begin(9600);
@@ -23,6 +33,11 @@ void setup() {
   lc.setIntensity(0, 1);    // set intensity to 1 (0-15)
   lc.clearDisplay(0);       // clear display
   lc.setLed(0, 7, 3, true); // light up a pixel at (7, 3)
+
+  // set up LCD display
+  lcd.begin(16, 2);
+  lcd.clear();
+  lcd.print("hello, world!");
 }
 
 struct Player {
@@ -135,9 +150,12 @@ struct FallingObjects fallingObjects{};
 unsigned long DELAY_TIME = 100;       // 0.1 sec
 unsigned long delayStart = millis();  // the time the delay started
 
-void loop() {
+void loop() {  
   // repeating timer
   if (millis() - delayStart >= DELAY_TIME) {
+    lcd.setCursor(0, 1);
+    lcd.print(millis() / 1000);
+    
     fallingObjects.update(&playerDot);
     fallingObjects.draw();
     fallingObjects.checkCollision(&playerDot);
