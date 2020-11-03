@@ -20,13 +20,30 @@ const int D7 = 4;
 auto lc  = LedControl(DIN, CLK, CS, 1);
 auto lcd = LiquidCrystal(RS, EN, D4, D5, D6, D7);
 
+unsigned long drawFrameStart = millis();
+unsigned long scoreStart = millis();
+
+byte heartSymbol[] = {
+  B00000,
+  B01010,
+  B11111,
+  B11111,
+  B01110,
+  B00100,
+  B00000,
+  B00000
+};
+
 void setup() {
   Serial.begin(9600);
 
+  DDRD = B11110011; // set pins 2 and 3 to input, the rest to output
+  DDRB = B11111111; // set all of pins 6-13 to output
+  //pinMode(button1Pin, INPUT);
+  //pinMode(button2Pin, INPUT);
+  
   // https://www.arduino.cc/reference/en/language/functions/external-interrupts/attachinterrupt/
-  pinMode(button1Pin, INPUT);
   attachInterrupt(digitalPinToInterrupt(button1Pin), onYellowBtnPress, FALLING);
-  pinMode(button2Pin, INPUT);
   attachInterrupt(digitalPinToInterrupt(button2Pin), onRedBtnPress, FALLING);
   
   lc.shutdown(0, false);    // wake up led display
@@ -35,12 +52,15 @@ void setup() {
   lc.setLed(0, 7, 3, true); // light up a pixel at (7, 3)
 
   // set up LCD display
+  lcd.createChar(0, heartSymbol);
   lcd.begin(16, 2);
   lcd.clear();
-  lcd.print("hello, world!");
+  lcd.print("Highscore:");
 }
 
 struct Player {
+  int score = 0;
+  int numLives = 3;
   int prevCol = 0;
   int currCol = 3;
 
@@ -123,44 +143,84 @@ struct FallingObjects {
         clmns[i] = 0;
       }
       
-      gameOver();
+      killPlayer(pl);
     }
   }
+
+  void killPlayer(Player *pl) {
+    // check life points
+    --pl->numLives;
+    if (pl->numLives == 0) {
+      gameOver(pl);
+    }
+
+    // draw dead animation
+    // sides
+    lc.setLed(0, 7, pl->currCol+1, true);
+    lc.setLed(0, 7, pl->currCol-1, true);
+    lc.setLed(0, 7, pl->currCol+2, true);
+    lc.setLed(0, 7, pl->currCol-2, true);
+    // diagonals
+    lc.setLed(0, 6, pl->currCol+1, true);
+    lc.setLed(0, 6, pl->currCol-1, true);
+    lc.setLed(0, 5, pl->currCol+2, true);
+    lc.setLed(0, 5, pl->currCol-2, true);
+  }
   
-  void gameOver() {
-    turnNo = 1;
+  void gameOver(Player *pl) {
+    // reset stats
     isGameOver = true;
+    turnNo = 1;
+    pl->numLives = 3;
+    pl->score = 0;
     
     // draws end-game "animation"
     for (int row = 0; row < 8; ++row) {
       for (int col = 0; col < 8; ++col) {
         lc.setLed(0, row, col, true);
+        clmns[col] = 0;
       }
     }
     
-    delay(500);
+    delay(2000);
     lc.clearDisplay(0);
+    
+    unsigned long diff_1 = millis() - drawFrameStart - 100;
+    unsigned long diff_2 = millis() - scoreStart - 100;
+    
+    drawFrameStart += diff_1;
+    scoreStart += diff_2;
+
     isGameOver = false;
+    lcd.clear();
+    lcd.print("Highscore:");
   }
 };
 
 struct Player playerDot{};
 struct FallingObjects fallingObjects{};
 
-unsigned long DELAY_TIME = 100;       // 0.1 sec
-unsigned long delayStart = millis();  // the time the delay started
-
-void loop() {  
-  // repeating timer
-  if (millis() - delayStart >= DELAY_TIME) {
-    lcd.setCursor(0, 1);
-    lcd.print(millis() / 1000);
-    
+void loop() {
+  if (millis() - drawFrameStart >= 100) {        
     fallingObjects.update(&playerDot);
     fallingObjects.draw();
     fallingObjects.checkCollision(&playerDot);
 
-    delayStart += DELAY_TIME;
+    // write on LCD screen
+    lcd.setCursor(14, 1);
+    lcd.print(playerDot.numLives);
+    lcd.setCursor(15, 1);
+    lcd.write(byte(0));
+    
+    drawFrameStart += 100;
+  }
+  
+  if (millis() - scoreStart >= 500) {
+    ++playerDot.score;
+    lcd.setCursor(0, 1);
+    lcd.print(playerDot.score);
+    
+    scoreStart += 500;
   }
 }
 
