@@ -21,6 +21,7 @@ auto lc  = LedControl(DIN, CLK, CS, 1);
 auto lcd = LiquidCrystal(RS, EN, D4, D5, D6, D7);
 
 unsigned long drawFrameStart = millis();
+unsigned long newObjStart = millis();
 unsigned long scoreStart = millis();
 
 byte heartSymbol[] = {
@@ -93,12 +94,11 @@ struct Player {
 
 struct FallingObjects {
   int clmns[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  int turnNo = 1;
   bool isGameOver = false;
 
   void draw() {
-    for(int i = 0; i < 8; ++i){
-      if(clmns[i] > 0) {
+    for (int i = 0; i < 8; ++i) {
+      if (clmns[i] > 0) {
         // draws a 3-dots-long tail
         lc.setLed(0, clmns[i] - 1, i, true);
         lc.setLed(0, clmns[i] - 2, i, true);
@@ -106,40 +106,37 @@ struct FallingObjects {
       }
     }
   }
+
+  // add new falling object
+  void spawnObj() {
+    int randomNum = random(0, 8);
+    if (clmns[randomNum] == 0) {
+      clmns[randomNum] = 1;
+    }
+  }
   
   void update(Player *pl) {
-    // spawn a new falling object every 4 turns
-    if(turnNo == 4){
-      int randomNum = random(0, 8);
-      if(clmns[randomNum] == 0){  
-        clmns[randomNum] = 1;
-      }
-
-      turnNo = 1;
-    }
-
     // animate falling objects
-    for(int i = 0; i < 8; ++i){
+    for (int i = 0; i < 8; ++i) {
       // remove objects that went out of display
-      if(clmns[i] == 11) { // 8 + 3 dots per tail
+      if (clmns[i] == 11) { // 8 + 3 dots per tail
         clmns[i] = 0;
       }
       
       // object falls 1 row below
-      if(clmns[i] != 0) {
+      if (clmns[i] != 0) {
         ++clmns[i];
       }
     }
 
-    ++turnNo;
     lc.clearDisplay(0);
     pl->draw();
   }
   
   void checkCollision(Player *pl) {
-    if(clmns[pl->currCol] == 8 || clmns[pl->currCol] == 9 || clmns[pl->currCol] == 10){      
+    if (clmns[pl->currCol] == 8 || clmns[pl->currCol] == 9 || clmns[pl->currCol] == 10) {      
       // remove object
-      for(int i = 0; i < 8; ++i){
+      for (int i = 0; i < 8; ++i) {
         clmns[i] = 0;
       }
       
@@ -170,7 +167,6 @@ struct FallingObjects {
   void gameOver(Player *pl) {
     // reset stats
     isGameOver = true;
-    turnNo = 1;
     pl->numLives = 3;
     pl->score = 0;
     
@@ -186,10 +182,12 @@ struct FallingObjects {
     lc.clearDisplay(0);
     
     unsigned long diff_1 = millis() - drawFrameStart - 100;
-    unsigned long diff_2 = millis() - scoreStart - 100;
+    unsigned long diff_2 = millis() - newObjStart - 100;
+    unsigned long diff_3 = millis() - scoreStart - 100;
     
     drawFrameStart += diff_1;
-    scoreStart += diff_2;
+    newObjStart += diff_2;
+    scoreStart += diff_3;
 
     isGameOver = false;
     lcd.clear();
@@ -200,7 +198,9 @@ struct FallingObjects {
 struct Player playerDot{};
 struct FallingObjects fallingObjects{};
 
+// loop consisting of async tasks
 void loop() {
+  // (1) new frame (update positions and draw) every 0.1 seconds
   if (millis() - drawFrameStart >= 100) {        
     fallingObjects.update(&playerDot);
     fallingObjects.draw();
@@ -214,7 +214,14 @@ void loop() {
     
     drawFrameStart += 100;
   }
-  
+
+  // (2) spawn new falling object every 4th frame (4 * 100 ms)
+  if (millis() - newObjStart >= 400) {
+    fallingObjects.spawnObj();
+    newObjStart += 400;
+  }
+
+  // (3) increase score every 0.5 seconds
   if (millis() - scoreStart >= 500) {
     ++playerDot.score;
     lcd.setCursor(0, 1);
