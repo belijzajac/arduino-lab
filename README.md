@@ -6,3 +6,5 @@ Lab works for the module "Introduction to Robotics"
 [2_uzduotis](/2_uzduotis)
 
 [3_uzduotis](/3_uzduotis)
+
+[4_uzduotis](/4_uzduotis)
