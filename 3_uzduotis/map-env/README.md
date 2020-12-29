@@ -2,15 +2,15 @@
 
 connects to Arduino through Serial, reads the values GY-VL53L0XV2 module manages to scan by being rotated 180 degrees counterclockwise, and graphically displays the gathered results
 
-## results
+## produced results
 
 the script manages to produce the following graph:
 
-![plot](myplot_2.png)
+<img src="../../docs/myplot_2.png" alt="myplot_2" style="zoom:75%;" />
 
 and here's everything explained:
 
-![plot-explained](myplot_2_explained.png)
+<img src="../../docs/myplot_2_explained.png" alt="myplot_2_explained" style="zoom:75%;" />
 
 ## dependencies
 
