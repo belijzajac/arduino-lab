@@ -1,5 +1,8 @@
 # arduino-lab
-Lab works for the module "Introduction to Robotics"
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
+
+Little inventions that I did for the module "Introduction to Robotics"
 
 ## [1_uzduotis](/1_uzduotis)
 
