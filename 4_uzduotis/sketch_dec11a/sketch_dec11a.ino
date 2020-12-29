@@ -19,7 +19,7 @@ const int SERVO_PIN = 12;
 Servo servoObj;
 
 // constants for ToF
-const int WORKING_DISTANCE = 600; // 300 mm (= 30 cm)
+const int WORKING_DISTANCE = 600; // 600 mm (= 60 cm)
 // constants for the big circle
 const int CIRCLE_CENTER_X = 64;
 const int CIRCLE_CENTER_Y = 80;
@@ -44,10 +44,7 @@ void setup() {
 void clearDisplay () {
   ucg.clearScreen();
   
-  ucg.setFont(ucg_font_ncenR12_tr);
-  ucg.setColor(255, 255, 255);
-  ucg.setColor(1, 255, 0,0);
-  
+  ucg.setFont(ucg_font_ncenR12_tr);  
   ucg.setColor(255, 255, 255);
   ucg.drawCircle(CIRCLE_CENTER_X, CIRCLE_CENTER_Y, CIRCLE_RADIUS, UCG_DRAW_ALL);
 }
